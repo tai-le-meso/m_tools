@@ -86,8 +86,12 @@ check(
 )
 check("preserves void elements", try! HTMLBeautifyLogic.run("<img src=\"a.png\">").contains("<img"))
 check(
-    "decodes named entities",
-    try! HTMLBeautifyLogic.run("<p>a &amp; b</p>").contains("a & b")
+    "preserves character entities instead of decoding them",
+    // A beautifier must not turn `&amp;` into a bare `&` — that would change what the
+    // document means and can produce invalid HTML. HTMLParser decodes entities while
+    // parsing and re-encodes them when emitting, so this is a round-trip. Decoding for
+    // display is HTMLEntityLogic's job, covered by its own check further down.
+    try! HTMLBeautifyLogic.run("<p>a &amp; b</p>").contains("a &amp; b")
 )
 
 print("HTMLMinifyLogic")
