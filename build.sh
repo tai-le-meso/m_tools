@@ -74,7 +74,7 @@ echo "==> Code signing"
 #                        import it on each release machine / CI. See CONTRIBUTING > Releasing.
 # Set RELEASE_CERT_SHA to that shared cert's SHA-1 to hard-fail a release signed by the
 # wrong identity (find it with: security find-identity -p codesigning).
-RELEASE_CERT_SHA=""
+RELEASE_CERT_SHA="9CA869539D55D6F71EE11EAC6A235FFE46CF6927"
 
 # Echo a code-signing identity's SHA-1 by (sub)name, or nothing. Matched without -v: a
 # self-signed cert is usable for signing even when it isn't a trusted root (-v hides it).
