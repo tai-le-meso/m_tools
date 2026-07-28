@@ -8,7 +8,9 @@ name: Release
 # one-time certificate setup that populates the two secrets used below.
 on:
   push:
-    tags: ["[1-9]+.[0-9]+.[0-9]+"]
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]  # glob, not regex: + is "one or more of the
+    # preceding character", so [1-9]+ would fail to match a major version
+    # containing a zero, e.g. 10.0.0.
 
 # Needed for `gh release create` to publish and upload assets.
 permissions:

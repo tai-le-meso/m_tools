@@ -607,7 +607,7 @@
 </style>
 </head>
 
-<body data-version="0.1.0">
+<body data-version="1.0.0">
 
 <!--
   The app icon, defined once and referenced with <use> wherever it appears. Same artwork
@@ -844,7 +844,8 @@
       There's a <code>.pkg</code> built for exactly this. An MDM installs it as root, so
       there's no admin prompt <em>and</em> no "cannot be verified" warning — and updates
       arrive the same way, silently. Point them at
-      <a data-link="deployment-doc" href="#">docs/deployment.md</a> in the repo.
+      <a data-link="deployment-doc" href="#">docs/deployment.md</a> in the repo — the
+      package is attached to every release alongside the .dmg.
     </div>
 
     <div class="note">
@@ -925,16 +926,17 @@ open ~/Applications/m_tools.app</code></pre>
       the GitHub release-notes link, and the .dmg download URL from it plus REPO_URL, so
       adding a release never means hand-writing five GitHub URLs.
     -->
-    <div class="release" id="v0-1-0" data-release="0.1.0">
+    <div class="release" id="v1-0-0" data-release="1.0.0">
       <div class="release-head">
-        <h3><a data-release-tag href="#">0.1.0</a></h3>
+        <h3><a data-release-tag href="#">1.0.0</a></h3>
         <span class="tag-current">Current</span>
         <span class="meta">First internal release</span>
       </div>
       <div class="release-links">
         <a data-release-notes href="#">Release notes on GitHub&nbsp;↗</a>
         <a data-release-dmg href="#">Download&nbsp;.dmg</a>
-        <a data-release-permalink href="#v0-1-0" title="Link to this release on this page">Permalink</a>
+        <a data-release-pkg href="#" title="Installer package for MDM deployment">Download&nbsp;.pkg</a>
+        <a data-release-permalink href="#v1-0-0" title="Link to this release on this page">Permalink</a>
       </div>
       <p style="margin-top:0;color:var(--muted);font-size:14px">
         The initial rollout: 26 tools, the shared two-pane workspace, and the CSV editor.
@@ -1026,7 +1028,7 @@ open ~/Applications/m_tools.app</code></pre>
   // ─── EDIT THIS ─────────────────────────────────────────────────────────────
   // Point this at the internal repo. Every link on the page is derived from it,
   // so this is the only line that needs changing when the repo moves.
-  const REPO_URL = "https://github.com/ORG/REPO";
+  const REPO_URL = "https://github.com/tai-le-meso/m_tools";
   // ───────────────────────────────────────────────────────────────────────────
 
   const version = document.body.dataset.version;
@@ -1091,6 +1093,11 @@ open ~/Applications/m_tools.app</code></pre>
       "[data-release-dmg]",
       REPO_URL + "/releases/download/" + v + "/m_tools-" + v + ".dmg",
       "Download m_tools-" + v + ".dmg"
+    );
+    set(
+      "[data-release-pkg]",
+      REPO_URL + "/releases/download/" + v + "/m_tools-" + v + ".pkg",
+      "Installer package for MDM deployment (m_tools-" + v + ".pkg)"
     );
 
     const compare = block.querySelector("[data-release-compare]");

@@ -104,11 +104,19 @@ asset appears under **Releases** — the install page's download button points a
    ```
    Every download, release, tag, and issue link on the page is derived from that one
    constant.
-2. **Enable Pages** — **Settings → Pages → Source: Deploy from a branch**, branch `main`,
-   folder `/docs`. The page lands at `https://ORG.github.io/m_tools/`.
-   - On a **private** repo, GitHub Pages needs GitHub Enterprise Cloud. If Pages isn't
-     available, the file is fully self-contained — copy it to any intranet host, or just
-     send people the raw file. It has no build step and no local assets.
+2. **Enable Pages** — **Settings → Pages → Source: Deploy from a branch**, branch `trunk`,
+   folder `/docs`. The page lands at `https://tai-le-meso.github.io/m_tools/`.
+   - `docs/.nojekyll` is committed so Pages copies the file verbatim. Without it, Pages runs
+     the page through Jekyll, which interprets `{{ }}`/`{% %}` — a hazard given the page
+     contains CSS/JS braces and an SVG with literal `{` and `}` glyphs.
+   - **Plan requirements, which are easy to get wrong:** Pages in a *private* repo needs
+     GitHub Pro, Team, or Enterprise — it isn't available on Free. And per GitHub's own
+     warning, a Pages site is *publicly readable even when the repo is private*. Restricting
+     it to people with repo access ("privately published") requires an **organization** on
+     **Enterprise Cloud**.
+   - So on Pro/Team the page would be world-readable. If that's not acceptable, skip Pages:
+     the file is fully self-contained, so copy it to any intranet host or send it directly.
+     It has no build step and no local assets.
 3. **Share the link** and tell people the first launch needs right-click → Open (the page
    explains why, since the app is signed with an internal cert rather than a paid Apple
    Developer ID).
