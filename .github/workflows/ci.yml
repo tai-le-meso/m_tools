@@ -1,0 +1,31 @@
+name: CI
+
+# Every push and PR gets compiled and smoke-tested. Compile errors have historically been
+# the main way this project breaks (there's no Xcode project to catch them in an editor),
+# so the build itself is the most valuable check here.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    # macOS runner is required: the app links AppKit/SwiftUI and the build shells out to
+    # `security` and `codesign`.
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Build app, icon, and DMG
+        # Plain `./build.sh`, not `--run`: the `--run` path ends with `open "$APP"`, which
+        # would try to launch a GUI app on a headless runner. This path also exercises
+        # tools/makeicon.swift and the DMG packaging. With no signing secrets present
+        # build.sh warns and falls back to an ad-hoc signature, which is fine for a check.
+        run: ./build.sh
+
+      - name: Run logic tests
+        run: ./tests/run.sh

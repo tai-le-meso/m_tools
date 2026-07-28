@@ -1,0 +1,115 @@
+name: Release
+
+# Cutting a release = pushing a version tag (no `v` prefix, matching VERSION in build.sh):
+#   git tag 0.1.0 && git push origin 0.1.0
+#
+# This workflow rebuilds from that tag, signs with the shared `m_tools-release` identity,
+# and publishes the DMG as a GitHub Release. See CONTRIBUTING.md → Releasing for the
+# one-time certificate setup that populates the two secrets used below.
+on:
+  push:
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+
+# Needed for `gh release create` to publish and upload assets.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version from the tag
+        id: version
+        run: echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify the tag matches VERSION in build.sh
+        # A tag that disagrees with build.sh would publish a DMG whose internal
+        # CFBundleShortVersionString doesn't match its own filename — confusing to debug
+        # later, so fail before anything is built.
+        run: |
+          declared=$(grep -m1 '^VERSION=' build.sh | cut -d'"' -f2)
+          echo "tag=${GITHUB_REF_NAME}  build.sh VERSION=${declared}"
+          if [ "$declared" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match VERSION=${declared} in build.sh."
+            exit 1
+          fi
+
+      - name: Import the release signing certificate
+        env:
+          CERT_P12_BASE64: ${{ secrets.RELEASE_CERT_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.RELEASE_CERT_PASSWORD }}
+        run: |
+          if [ -z "$CERT_P12_BASE64" ]; then
+            echo "::error::RELEASE_CERT_P12_BASE64 is not set — see CONTRIBUTING.md → Releasing."
+            exit 1
+          fi
+
+          # A throwaway keychain with a random password, unlocked only for this job. The
+          # runner is destroyed afterwards, but the keychain is still deleted explicitly
+          # below so a cached/self-hosted runner can't leak the identity between jobs.
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> "$GITHUB_ENV"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 3600 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+
+          echo "$CERT_P12_BASE64" | base64 --decode > /tmp/release-cert.p12
+          security import /tmp/release-cert.p12 \
+            -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign -A
+          rm -f /tmp/release-cert.p12
+
+          # Without this, codesign prompts for keychain access and hangs forever on a
+          # headless runner instead of failing.
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+          # build.sh finds the identity via `security find-identity`, which only searches
+          # the keychain *search list* — creating the keychain doesn't add it there.
+          security list-keychains -d user -s build.keychain $(security list-keychains -d user | tr -d '"')
+          security default-keychain -s build.keychain
+
+          echo "Available codesigning identities:"
+          security find-identity -p codesigning
+
+      - name: Build and sign
+        # --pkg also produces m_tools-<version>.pkg for MDM deployment, which is the path
+        # managed Macs use to avoid both the admin and Gatekeeper prompts entirely.
+        # See docs/deployment.md.
+        run: ./build.sh --pkg
+
+      - name: Confirm the DMG is signed by the expected identity
+        run: |
+          codesign --verify --deep --strict --verbose=2 "build/m_tools.app"
+          codesign --display --verbose=2 "build/m_tools.app" 2>&1 | grep -i "Authority" || true
+
+      - name: Name the DMG after its version
+        # build.sh always writes m_tools.dmg; releases are versioned so people can tell
+        # downloads apart, and the website's download link expects this exact filename.
+        run: mv m_tools.dmg "m_tools-${{ steps.version.outputs.value }}.dmg"
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.value }}
+        # `--generate-notes` has GitHub write the commit/PR summary against the previous
+        # release automatically — no need to work out the previous tag ourselves, which
+        # wouldn't be possible anyway since checkout is a shallow clone. The curated,
+        # human-written notes live on docs/index.html and link back to this release.
+        # Both artifacts are attached: the DMG for people installing by hand, and the .pkg
+        # for IT to push through MDM.
+        run: |
+          gh release create "$VERSION" \
+            "m_tools-${VERSION}.dmg" \
+            "m_tools-${VERSION}.pkg" \
+            --title "m_tools $VERSION" \
+            --generate-notes \
+            --verify-tag
+
+      - name: Remove the signing keychain
+        # `always()` so the identity is torn down even when an earlier step failed.
+        if: always()
+        run: security delete-keychain build.keychain || true

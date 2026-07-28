@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<!--
+  m_tools — internal distribution page.
+
+  ▸ BEFORE PUBLISHING: set REPO_URL in the small script at the bottom of this file to the
+    real internal repo (e.g. https://github.com/mesoneer/m_tools). Every download / release
+    / issues link on this page is generated from that one constant.
+  ▸ Bump the version in the `data-version` attribute on <body> when you cut a release, and
+    add a matching entry to the "Release notes" section.
+
+  Self-contained on purpose: no build step, no frameworks, no assets. Serve it from GitHub
+  Pages or drop it on any intranet host.
+-->
+<html lang="en" data-repo-fallback="https://github.com">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>m_tools — internal developer toolbox for macOS</title>
+<meta name="description" content="An offline-first developer toolbox for macOS. 26 tools for JSON, YAML, XML, CSV, hashing, JWTs and more — nothing you paste ever leaves your machine.">
+
+<!--
+  Favicon is the app icon inlined as a data URI — same artwork as tools/makeicon.swift,
+  so there's no separate .ico to keep in sync and no extra request. Braces are drawn as
+  text with a system fallback, matching how the .icns is generated.
+-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Crect width='1024' height='1024' rx='224' fill='%233B2A78'/%3E%3Ctext x='196' y='512' font-family='Manrope,sans-serif' font-weight='800' font-size='640' fill='%23fff' text-anchor='middle' dominant-baseline='central' opacity='.92'%3E%7B%3C/text%3E%3Ctext x='828' y='512' font-family='Manrope,sans-serif' font-weight='800' font-size='640' fill='%23fff' text-anchor='middle' dominant-baseline='central' opacity='.92'%3E%7D%3C/text%3E%3Ctext x='470' y='482' font-family='Manrope,sans-serif' font-weight='800' font-size='360' fill='%23fff' text-anchor='middle' dominant-baseline='central'%3Em%3C/text%3E%3Crect x='378' y='668' width='184' height='66' rx='20' fill='%23FFB020'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Design tokens mirror Sources/Theme.swift so the page and the app read as one product. */
+  :root {
+    --bg: #F5F5F9;
+    --surface: #FFFFFF;
+    --surface-2: #F0F0F5;
+    --border: #E7E7EF;
+    --text: #15131E;
+    --muted: #6D6B7E;
+    --primary: #3B2A78;
+    --primary-bright: #6F5FA6;
+    --primary-100: rgba(59, 42, 120, 0.10);
+    --nav-bg: #141220;
+    --nav-text: #B7B5C6;
+    --success: #12A150;
+    --warning: #B4820A;
+    --radius-sm: 9px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 2px rgba(20, 18, 30, 0.06);
+    --shadow-lift: 0 10px 28px rgba(20, 18, 30, 0.10);
+    /* Height of the sticky header — anchors offset by this so a jumped-to heading isn't
+       hidden underneath it. Kept as a variable so the two stay in sync. */
+    --header-h: 62px;
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0D0C13;
+      --surface: #17151F;
+      --surface-2: #211E2C;
+      --border: #2A2837;
+      --text: #F3F2F9;
+      --muted: #9794A8;
+      --primary: #6553A0;
+      --primary-bright: #8474BC;
+      --primary-100: rgba(132, 116, 188, 0.16);
+      --nav-bg: #08070C;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+      --shadow-lift: 0 10px 28px rgba(0, 0, 0, 0.55);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--primary-bright); }
+
+  code, .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+  }
+
+  code {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 5px;
+  }
+
+  pre {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 0 0 16px;
+  }
+
+  pre code { background: none; border: none; padding: 0; }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- Top bar (fixed-dark, like the app's sidebar) ---------- */
+
+  header.topbar {
+    background: var(--nav-bg);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .topbar .wrap { display: flex; align-items: center; gap: 20px; }
+
+  /* Icon mark + wordmark lockup, matching the app's sidebar: the underscore carries the
+     same amber as the icon's cursor block. */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 20px;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  .brand svg { display: block; border-radius: 7px; }
+
+  .accent { color: #FFB020; }
+
+  .brand svg { transition: transform 0.35s var(--ease); }
+  .brand:hover svg { transform: rotate(-6deg) scale(1.08); }
+
+  .topbar nav { margin-left: auto; display: flex; gap: 4px; }
+
+  .topbar nav a {
+    position: relative;
+    color: var(--nav-text);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 7px;
+    transition: color 0.2s var(--ease), background 0.2s var(--ease);
+  }
+
+  .topbar nav a:hover { color: #fff; background: rgba(255, 255, 255, 0.07); }
+
+  /* Scroll-spy state, set from JS as each section passes under the header. */
+  .topbar nav a.active { color: #fff; }
+
+  .topbar nav a.active::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 1px;
+    height: 2px;
+    border-radius: 2px;
+    background: #FFB020;
+    animation: nav-underline 0.28s var(--ease);
+  }
+
+  @keyframes nav-underline {
+    from { transform: scaleX(0); opacity: 0; }
+    to { transform: scaleX(1); opacity: 1; }
+  }
+
+  /* Reading-progress hairline pinned to the bottom edge of the sticky header. */
+  #progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary-bright), #FFB020);
+    transition: width 0.08s linear;
+  }
+
+  /* ---------- Hero ---------- */
+
+  .hero { padding: 56px 0 48px; }
+
+  .hero-icon {
+    display: block;
+    margin-bottom: 22px;
+    border-radius: 19px; /* 224/1024 of 88px — matches the icon's own corner radius */
+    box-shadow: 0 6px 20px rgba(59, 42, 120, 0.28);
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 0 0 10px;
+  }
+
+  h1 { font-size: 42px; line-height: 1.15; margin: 0 0 16px; font-weight: 800; }
+
+  .lede { font-size: 18px; color: var(--muted); max-width: 620px; margin: 0 0 28px; }
+
+  .cta-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 12px 22px;
+    border-radius: var(--radius-sm);
+    border: none;
+  }
+
+  .btn {
+    transition: background 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  }
+
+  .btn:hover {
+    background: var(--primary-bright);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 42, 120, 0.32);
+  }
+
+  .btn:active { transform: translateY(0); }
+
+  .btn.secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn.secondary:hover { background: var(--surface-2); }
+
+  .meta { font-size: 13px; color: var(--muted); }
+
+  .pill {
+    display: inline-block;
+    background: var(--primary-100);
+    color: var(--primary-bright);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 11px;
+    border-radius: 20px;
+  }
+
+  /* ---------- Sections ---------- */
+
+  section {
+    padding: 44px 0;
+    border-top: 1px solid var(--border);
+    /* Stops the sticky header from covering a heading you just jumped to. */
+    scroll-margin-top: calc(var(--header-h) + 16px);
+  }
+
+  h2 { font-size: 26px; font-weight: 800; margin: 0 0 8px; }
+
+  h3 { font-size: 16px; font-weight: 700; margin: 28px 0 10px; }
+
+  .section-sub { color: var(--muted); margin: 0 0 28px; }
+
+  /* ---------- Cards ---------- */
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.25s var(--ease);
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+    border-color: var(--primary-bright);
+  }
+
+  .card h4 { margin: 0 0 6px; font-size: 15px; font-weight: 700; }
+
+  .card p { margin: 0; font-size: 14px; color: var(--muted); }
+
+  /* ---------- Tool tables ---------- */
+
+  .group { margin-bottom: 26px; }
+
+  .group-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .group-title h3 { margin: 0; }
+
+  .count {
+    background: var(--surface-2);
+    color: var(--muted);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 9px;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+  table th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+
+  table tr:last-child td { border-bottom: none; }
+
+  table tr { transition: background 0.15s var(--ease); }
+
+  table tr:hover { background: var(--surface-2); }
+
+  table tr:hover td:first-child { color: var(--primary-bright); }
+
+  table td:first-child { font-weight: 600; white-space: nowrap; width: 1%; }
+
+  table td:last-child { color: var(--muted); }
+
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  /* ---------- Steps ---------- */
+
+  ol.steps { counter-reset: step; list-style: none; padding: 0; margin: 0; }
+
+  ol.steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 42px;
+    margin-bottom: 22px;
+  }
+
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  ol.steps strong { display: block; margin-bottom: 4px; }
+
+  /* ---------- Callouts ---------- */
+
+  .note {
+    border-left: 3px solid var(--primary-bright);
+    background: var(--primary-100);
+    padding: 14px 18px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+
+  .note.warn {
+    border-left-color: var(--warning);
+    background: rgba(180, 130, 10, 0.10);
+  }
+
+  .note strong { display: block; margin-bottom: 3px; }
+
+  /* ---------- Release notes ---------- */
+
+  .release {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    /* Offset for the sticky header when jumped to via a #v0-1-0 permalink. */
+    scroll-margin-top: calc(var(--header-h) + 16px);
+    transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  }
+
+  .release-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .release-head h3 { margin: 0; font-size: 20px; }
+
+  /* The version number itself is the link to its tag — underlined only on hover so the
+     heading still reads as a heading. */
+  .release-head h3 a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: color 0.18s var(--ease), border-color 0.18s var(--ease);
+  }
+
+  .release-head h3 a:hover {
+    color: var(--primary-bright);
+    border-bottom-color: var(--primary-bright);
+  }
+
+  .release-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: -4px 0 16px;
+  }
+
+  .release-links a {
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    transition: color 0.18s var(--ease), border-color 0.18s var(--ease),
+                background 0.18s var(--ease), transform 0.18s var(--ease);
+  }
+
+  .release-links a:hover {
+    color: var(--primary-bright);
+    border-color: var(--primary-bright);
+    background: var(--primary-100);
+    transform: translateY(-1px);
+  }
+
+  /* Briefly ring the release you arrived at via a #v0-1-0 permalink, so it's obvious
+     which one the link pointed to. */
+  .release:target {
+    border-color: var(--primary-bright);
+    box-shadow: 0 0 0 3px var(--primary-100);
+  }
+
+  .tag-current {
+    background: var(--success);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .release ul { margin: 0 0 4px; padding-left: 20px; }
+
+  .release li { margin-bottom: 6px; font-size: 14px; }
+
+  .release li strong { font-weight: 700; }
+
+  footer {
+    background: var(--nav-bg);
+    color: var(--nav-text);
+    padding: 30px 0;
+    font-size: 13px;
+    margin-top: 20px;
+  }
+
+  footer a { color: #fff; }
+
+  /* ---------- Motion ---------- */
+
+  /* Elements start slightly low and transparent; JS adds .in as they scroll into view.
+     The starting state lives behind .js so the page still reads correctly with no
+     JavaScript — without that guard, a failed script would leave everything invisible. */
+  .js .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+  }
+
+  .js .reveal.in { opacity: 1; transform: none; }
+
+  /* Hero pieces animate on load rather than on scroll — they're already in view. */
+  .js .hero > * {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: hero-in 0.6s var(--ease) forwards;
+  }
+
+  .js .hero > *:nth-child(1) { animation-delay: 0.05s; }
+  .js .hero > *:nth-child(2) { animation-delay: 0.13s; }
+  .js .hero > *:nth-child(3) { animation-delay: 0.21s; }
+  .js .hero > *:nth-child(4) { animation-delay: 0.29s; }
+  .js .hero > *:nth-child(5) { animation-delay: 0.37s; }
+
+  @keyframes hero-in {
+    to { opacity: 1; transform: none; }
+  }
+
+  /* The amber cursor from the app icon, echoed at the end of the headline. */
+  .caret {
+    display: inline-block;
+    width: 0.42em;
+    height: 0.72em;
+    margin-left: 0.1em;
+    border-radius: 3px;
+    background: #FFB020;
+    vertical-align: -0.04em;
+    animation: caret-blink 1.15s steps(1) infinite;
+  }
+
+  @keyframes caret-blink {
+    0%, 45% { opacity: 1; }
+    55%, 100% { opacity: 0.15; }
+  }
+
+  #to-top {
+    position: fixed;
+    right: 26px;
+    bottom: 26px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: var(--shadow-lift);
+    opacity: 0;
+    transform: translateY(12px) scale(0.9);
+    pointer-events: none;
+    transition: opacity 0.25s var(--ease), transform 0.25s var(--ease), background 0.2s var(--ease);
+    z-index: 20;
+  }
+
+  #to-top.show { opacity: 1; transform: none; pointer-events: auto; }
+
+  #to-top:hover { background: var(--surface-2); transform: translateY(-2px); }
+
+  /* Honor the system "reduce motion" setting: keep every end state, drop the movement.
+     Anyone who gets motion sick from parallax/slide-ins has asked the OS not to do this. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+
+    .js .reveal,
+    .js .hero > * {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+      animation: none !important;
+    }
+
+    .caret { animation: none; }
+
+    .card:hover, .btn:hover, #to-top:hover, .brand:hover svg { transform: none; }
+
+    #progress { transition: none; }
+  }
+
+  @media (max-width: 620px) {
+    h1 { font-size: 32px; }
+    .topbar nav { display: none; }
+    #to-top { right: 16px; bottom: 16px; }
+  }
+</style>
+</head>
+
+<body data-version="0.1.0">
+
+<!--
+  The app icon, defined once and referenced with <use> wherever it appears. Same artwork
+  and same 1024×1024 coordinates as tools/makeicon.swift — keep the two in step.
+-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="app-icon" viewBox="0 0 1024 1024">
+      <rect width="1024" height="1024" rx="224" fill="#3B2A78"></rect>
+      <text x="196" y="512" font-family="Manrope, sans-serif" font-weight="800" font-size="640" fill="#ffffff" text-anchor="middle" dominant-baseline="central" opacity="0.92">{</text>
+      <text x="828" y="512" font-family="Manrope, sans-serif" font-weight="800" font-size="640" fill="#ffffff" text-anchor="middle" dominant-baseline="central" opacity="0.92">}</text>
+      <text x="470" y="482" font-family="Manrope, sans-serif" font-weight="800" font-size="360" fill="#ffffff" text-anchor="middle" dominant-baseline="central">m</text>
+      <rect x="378" y="668" width="184" height="66" rx="20" fill="#FFB020"></rect>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 1024 1024" width="30" height="30" aria-hidden="true"><use href="#app-icon"></use></svg>
+      <span>m<span class="accent">_</span>tools</span>
+    </a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#tools">Tools</a>
+      <a href="#install">Install</a>
+      <a href="#releases">Releases</a>
+    </nav>
+  </div>
+  <div id="progress"></div>
+</header>
+
+<main class="wrap" id="top">
+
+  <div class="hero">
+    <svg class="hero-icon" viewBox="0 0 1024 1024" width="88" height="88" aria-hidden="true"><use href="#app-icon"></use></svg>
+    <p class="eyebrow">Internal tool · macOS</p>
+    <h1>Your developer toolbox,<br>entirely offline.<span class="caret" aria-hidden="true"></span></h1>
+    <p class="lede">
+      26 everyday tools — JSON, YAML, XML, CSV, hashing, JWTs, encoders — in one native
+      macOS app. Nothing you paste ever leaves your machine: the app makes no network
+      calls at all, so it's safe for production payloads, tokens, and customer data.
+    </p>
+    <div class="cta-row">
+      <a class="btn" data-link="latest-download" href="#install">Download for macOS</a>
+      <span class="pill" data-version-label>v0.1.0</span>
+      <span class="meta">Requires macOS 13 Ventura or later · Apple silicon &amp; Intel</span>
+    </div>
+  </div>
+
+  <!-- ============================ FEATURES ============================ -->
+  <section id="features">
+    <h2>Why use it</h2>
+    <p class="section-sub">
+      The parts that apply to every tool in the app, not just one.
+    </p>
+
+    <div class="cards">
+      <div class="card">
+        <h4>Nothing leaves your machine</h4>
+        <p>
+          No network code anywhere in the app, and no third-party dependencies to audit.
+          Paste a real access token or a customer record without thinking twice.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Live, as you type</h4>
+        <p>
+          Output updates on every keystroke — no "run" button. Tools with two directions
+          (Beautify/Minify, JSON→CSV/CSV→JSON) share one input and switch with a toggle.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Syntax highlighting</h4>
+        <p>
+          JSON, HTML, XML, CSS and YAML output is colored by token type, with separate
+          light and dark palettes that follow the app theme.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Collapsible tree view</h4>
+        <p>
+          Switch JSON, YAML or XML output from text to a foldable node tree — expand and
+          collapse node by node, or all at once. Stays fast on large documents.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Full-screen inspection</h4>
+        <p>
+          Blow either pane up to near-screen size when a payload is too big for the split
+          view. Output scrolls and stays selectable without being editable.
+        </p>
+      </div>
+      <div class="card">
+        <h4>Out of your way</h4>
+        <p>
+          Lives in the menu bar with no Dock icon. ⌘C / ⌘V / ⌘A work as expected, with a
+          brief highlight on whichever pane just changed.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ TOOLS ============================ -->
+  <section id="tools">
+    <h2>The tools</h2>
+    <p class="section-sub">Grouped the same way they appear in the app's sidebar.</p>
+
+    <div class="group">
+      <div class="group-title"><h3>Format</h3><span class="count">5</span></div>
+      <div class="table-wrap">
+        <table>
+          <tr><td>JSON Formatter</td><td>Validate, pretty-print, and minify JSON</td></tr>
+          <tr><td>HTML Beautify/Minify</td><td>Pretty-print or minify HTML markup</td></tr>
+          <tr><td>CSS Beautify/Minify</td><td>Pretty-print or minify CSS, including nested at-rules</td></tr>
+          <tr><td>XML Beautify/Minify</td><td>Pretty-print or minify XML documents</td></tr>
+          <tr><td>Line Sort/Dedupe</td><td>Sort lines alphabetically and remove duplicates</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-title"><h3>Convert</h3><span class="count">10</span></div>
+      <div class="table-wrap">
+        <table>
+          <tr><td>YAML to JSON</td><td>Convert YAML documents to JSON</td></tr>
+          <tr><td>JSON to YAML</td><td>Convert JSON to YAML documents</td></tr>
+          <tr><td>JSON ⇄ CSV</td><td>Flatten JSON arrays to CSV and back</td></tr>
+          <tr><td>CSV Editor</td><td>Open, edit, and save CSV files as a spreadsheet-style grid</td></tr>
+          <tr><td>URL Parser</td><td>Break a URL into scheme, host, path, and query</td></tr>
+          <tr><td>Number Base Converter</td><td>Convert between binary, octal, decimal, and hex</td></tr>
+          <tr><td>String Case Converter</td><td>camelCase, PascalCase, snake_case, kebab-case…</td></tr>
+          <tr><td>Hex ⇄ ASCII</td><td>Convert between hex bytes and ASCII text</td></tr>
+          <tr><td>PHP Serialize/Unserialize</td><td>Convert between JSON and PHP's <code>serialize()</code> format</td></tr>
+          <tr><td>SVG to CSS</td><td>Wrap SVG markup as a CSS <code>background-image</code> data URI</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-title"><h3>Inspect</h3><span class="count">3</span></div>
+      <div class="table-wrap">
+        <table>
+          <tr><td>Unix Time Converter</td><td>Convert between Unix timestamps and ISO 8601 dates</td></tr>
+          <tr><td>JWT Debugger</td><td>Decode a JWT's header, payload, and expiry</td></tr>
+          <tr><td>String Inspector</td><td>Character, byte, line, and word counts</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-title"><h3>Generate</h3><span class="count">4</span></div>
+      <div class="table-wrap">
+        <table>
+          <tr><td>Hash Generator</td><td>MD5, SHA-1, and SHA-256 digests</td></tr>
+          <tr><td>UUID/ULID</td><td>Generate or decode UUIDs and ULIDs</td></tr>
+          <tr><td>Lorem Ipsum Generator</td><td>Placeholder paragraphs for mockups</td></tr>
+          <tr><td>Random String Generator</td><td>Alphanumeric strings of a given length</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-title"><h3>Encode</h3><span class="count">4</span></div>
+      <div class="table-wrap">
+        <table>
+          <tr><td>Base64</td><td>Encode and decode Base64 strings</td></tr>
+          <tr><td>URL Encode/Decode</td><td>Percent-encode or decode a URL or query fragment</td></tr>
+          <tr><td>HTML Entity Encode/Decode</td><td>Convert <code>&amp;amp;</code> and friends to and from plain text</td></tr>
+          <tr><td>Backslash Escape/Unescape</td><td>Escape or unescape <code>\n</code>, <code>\t</code>, quotes, backslashes</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <h3>CSV Editor</h3>
+    <p class="section-sub" style="margin-bottom:0">
+      The one tool with its own layout: a spreadsheet-style grid with a pinned header row,
+      inferred column types, row numbers, add/remove rows and columns, a configurable
+      delimiter (comma, semicolon, tab, pipe, or custom), and a double-click cell dialog
+      that shows the full value, pretty-prints JSON, and saves straight back to the open file.
+    </p>
+  </section>
+
+  <!-- ============================ INSTALL ============================ -->
+  <section id="install">
+    <h2>Install</h2>
+    <p class="section-sub">About a minute, start to finish.</p>
+
+    <ol class="steps">
+      <li>
+        <strong>Download the disk image</strong>
+        Grab <code data-dmg-name>m_tools-0.1.0.dmg</code> from the
+        <a data-link="latest-release" href="#">latest release</a> — or jump to
+        <a href="#releases">the release notes</a> to see what changed first.
+      </li>
+      <li>
+        <strong>Drag the app to Applications</strong>
+        Open the <code>.dmg</code> and drag <strong>m_tools.app</strong> into your
+        <code>/Applications</code> folder.
+      </li>
+      <li>
+        <strong>Open it the first time with right-click → Open</strong>
+        m_tools is signed with an internal certificate rather than a paid Apple Developer
+        ID, so on first launch macOS will say it "cannot be opened because the developer
+        cannot be verified." Right-click (or Control-click) the app icon, choose
+        <strong>Open</strong>, then confirm <strong>Open</strong> in the dialog. You only
+        need to do this once — double-clicking works normally from then on.
+      </li>
+      <li>
+        <strong>Find it in the menu bar</strong>
+        m_tools has no Dock icon by design. Look for its icon in the menu bar at the top
+        right of your screen; click it and choose <strong>Show m_tools</strong> to open the
+        window, or <strong>Quit m_tools</strong> to exit.
+      </li>
+    </ol>
+
+    <div class="note warn">
+      <strong>If right-click → Open doesn't appear to work</strong>
+      Some Mac configurations quarantine downloaded apps more aggressively. Open
+      <em>System Settings → Privacy &amp; Security</em>, scroll to the Security section, and
+      click <strong>Open Anyway</strong> next to the m_tools message, then launch the app again.
+    </div>
+
+    <h3>On a managed Mac, or without admin rights</h3>
+    <p class="section-sub" style="margin-bottom:16px">
+      If step 2 asks for an admin password you don't have, you're a standard user and
+      <code>/Applications</code> isn't writable by you. Two ways around it, neither of which
+      needs a password:
+    </p>
+
+    <div class="note">
+      <strong>Ask IT to push it through MDM</strong>
+      There's a <code>.pkg</code> built for exactly this. An MDM installs it as root, so
+      there's no admin prompt <em>and</em> no "cannot be verified" warning — and updates
+      arrive the same way, silently. Point them at
+      <a data-link="deployment-doc" href="#">docs/deployment.md</a> in the repo.
+    </div>
+
+    <div class="note">
+      <strong>Or install it just for yourself</strong>
+      <code>~/Applications</code> is a per-user app folder that belongs to you, so no
+      authentication is involved. Paste this into Terminal after downloading:
+      <pre style="margin:12px 0 0"><code>mkdir -p ~/Applications
+hdiutil attach ~/Downloads/m_tools-*.dmg
+cp -R /Volumes/m_tools/m_tools.app ~/Applications/
+hdiutil detach /Volumes/m_tools
+xattr -dr com.apple.quarantine ~/Applications/m_tools.app
+open ~/Applications/m_tools.app</code></pre>
+      The last-but-one line removes the "downloaded from the internet" flag that triggers the
+      verification warning — the same decision as clicking <em>Open Anyway</em>, just
+      scoped to this one app instead of changing a system setting.
+    </div>
+
+    <h3>System requirements</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><td>macOS</td><td>13.0 Ventura or later</td></tr>
+        <tr><td>Hardware</td><td>Apple silicon or Intel</td></tr>
+        <tr><td>Disk</td><td>Under 10&nbsp;MB</td></tr>
+        <tr><td>Network</td><td>None — the app never connects to anything</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================ UPDATING ============================ -->
+  <section id="updating">
+    <h2>Updating</h2>
+    <p class="section-sub">
+      There's no auto-updater yet — updates are a re-download, which takes about as long as
+      the original install.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <strong>Check which version you have</strong>
+        The version is shown on the release you downloaded. If you're unsure, run this in
+        Terminal:
+        <pre><code>mdls -name kMDItemVersion /Applications/m_tools.app</code></pre>
+      </li>
+      <li>
+        <strong>Compare against the latest release</strong>
+        The current version is
+        <strong><a data-link="current-tag" href="#"><span data-version-label>0.1.0</span></a></strong>
+        — see <a data-link="releases" href="#">all releases</a>, or the
+        <a href="#releases">release notes below</a>.
+      </li>
+      <li>
+        <strong>Quit, replace, reopen</strong>
+        Quit m_tools from the menu bar first, then drag the new app into
+        <code>/Applications</code>, replacing the old one. Because every release is signed
+        with the same internal certificate, macOS treats it as the same app — you won't have
+        to do the right-click → Open dance again.
+      </li>
+    </ol>
+
+    <div class="note">
+      <strong>Want to know when there's a new version?</strong>
+      Open the repo and click <em>Watch → Custom → Releases</em>. You'll get a notification
+      whenever a release is published, and nothing else.
+    </div>
+  </section>
+
+  <!-- ============================ RELEASES ============================ -->
+  <section id="releases">
+    <h2>Release notes</h2>
+    <p class="section-sub">
+      Newest first. Every release is built and signed by CI from a version tag, so each
+      version below corresponds to a real tag and a published build —
+      <a data-link="releases" href="#">browse them all on GitHub</a>.
+    </p>
+
+    <!--
+      Each block needs only `data-release="<version>"`. The script derives the tag link,
+      the GitHub release-notes link, and the .dmg download URL from it plus REPO_URL, so
+      adding a release never means hand-writing five GitHub URLs.
+    -->
+    <div class="release" id="v0-1-0" data-release="0.1.0">
+      <div class="release-head">
+        <h3><a data-release-tag href="#">0.1.0</a></h3>
+        <span class="tag-current">Current</span>
+        <span class="meta">First internal release</span>
+      </div>
+      <div class="release-links">
+        <a data-release-notes href="#">Release notes on GitHub&nbsp;↗</a>
+        <a data-release-dmg href="#">Download&nbsp;.dmg</a>
+        <a data-release-permalink href="#v0-1-0" title="Link to this release on this page">Permalink</a>
+      </div>
+      <p style="margin-top:0;color:var(--muted);font-size:14px">
+        The initial rollout: 26 tools, the shared two-pane workspace, and the CSV editor.
+      </p>
+      <ul>
+        <li><strong>26 tools</strong> across Format, Convert, Inspect, Generate, and Encode
+          — see the full list above.</li>
+        <li><strong>Searchable sidebar</strong> with collapsible category sections; the
+          selected tool fills the main pane.</li>
+        <li><strong>Syntax highlighting</strong> for JSON, HTML, XML, CSS, and YAML output,
+          with matched light and dark palettes.</li>
+        <li><strong>Collapsible tree view</strong> for JSON, YAML, and XML — fold node by
+          node, or expand/collapse everything at once.</li>
+        <li><strong>Expand to full screen</strong> for either the input or output pane.</li>
+        <li><strong>CSV Editor</strong> — open, edit, and save CSV files in a grid with a
+          pinned header, inferred column types, configurable delimiter, and a
+          double-click cell dialog that pretty-prints JSON values.</li>
+        <li><strong>Keyboard shortcuts</strong> — ⌘C copy, ⌘V paste, ⌘A select all, with a
+          highlight pulse on the pane that changed.</li>
+        <li><strong>Light and dark themes</strong>, toggled from the header.</li>
+        <li><strong>Menu bar app</strong> — no Dock icon; show or quit from the status item.</li>
+      </ul>
+    </div>
+
+    <!--
+      TEMPLATE — copy this block for the next release, put it above 0.1.0, move the
+      "Current" badge onto it, and update <body data-version>. The id follows the version
+      with dots as dashes (0.2.0 → v0-2-0) so the permalink is stable; every GitHub URL
+      is generated from data-release.
+
+      <div class="release" id="v0-2-0" data-release="0.2.0">
+        <div class="release-head">
+          <h3><a data-release-tag href="#">0.2.0</a></h3>
+          <span class="tag-current">Current</span>
+          <span class="meta">Released YYYY-MM-DD</span>
+        </div>
+        <div class="release-links">
+          <a data-release-notes href="#">Release notes on GitHub&nbsp;↗</a>
+          <a data-release-dmg href="#">Download&nbsp;.dmg</a>
+          <a data-release-compare data-release-previous="0.1.0" href="#">Compare with 0.1.0&nbsp;↗</a>
+          <a data-release-permalink href="#v0-2-0">Permalink</a>
+        </div>
+        <ul>
+          <li><strong>Added</strong> — …</li>
+          <li><strong>Fixed</strong> — …</li>
+        </ul>
+      </div>
+    -->
+  </section>
+
+  <!-- ============================ SUPPORT ============================ -->
+  <section id="support">
+    <h2>Found a bug? Want a tool?</h2>
+    <p class="section-sub">
+      m_tools is maintained internally, so requests from the team genuinely do shape what
+      gets built next.
+    </p>
+    <div class="cta-row">
+      <a class="btn secondary" data-link="issues" href="#">Open an issue</a>
+      <a class="btn secondary" data-link="repo" href="#">View the source</a>
+    </div>
+    <p class="meta" style="margin-top:20px">
+      When reporting a bug, it helps to include your macOS version, the m_tools version,
+      which tool you were using, and — if you can share it — a sample input that reproduces
+      the problem.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span style="display:inline-flex;align-items:center;gap:8px;vertical-align:-6px">
+      <svg viewBox="0 0 1024 1024" width="22" height="22" style="border-radius:5px" aria-hidden="true"><use href="#app-icon"></use></svg>
+      <strong style="color:#fff">m<span class="accent">_</span>tools</strong>
+    </span>
+    — internal developer toolbox ·
+    Built and maintained in-house · Not for external distribution.
+    <br>
+    <span style="opacity:0.7">
+      Offline-first: no telemetry, no analytics, no network calls.
+    </span>
+  </div>
+</footer>
+
+<button id="to-top" type="button" aria-label="Back to top" title="Back to top">↑</button>
+
+<script>
+  // ─── EDIT THIS ─────────────────────────────────────────────────────────────
+  // Point this at the internal repo. Every link on the page is derived from it,
+  // so this is the only line that needs changing when the repo moves.
+  const REPO_URL = "https://github.com/ORG/REPO";
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const version = document.body.dataset.version;
+
+  // Keep every version label on the page in sync with <body data-version>.
+  document.querySelectorAll("[data-version-label]").forEach(function (el) {
+    el.textContent = el.classList.contains("pill") ? "v" + version : version;
+  });
+
+  const dmgName = "m_tools-" + version + ".dmg";
+  document.querySelectorAll("[data-dmg-name]").forEach(function (el) {
+    el.textContent = dmgName;
+  });
+
+  const destinations = {
+    repo: REPO_URL,
+    issues: REPO_URL + "/issues/new",
+    releases: REPO_URL + "/releases",
+    // Resolves to whatever the newest published release attached, so these keep working
+    // after a version bump without anyone editing this file.
+    "latest-download": REPO_URL + "/releases/latest",
+    "latest-release": REPO_URL + "/releases/latest",
+    // The tag matching the version this page currently advertises.
+    "current-tag": REPO_URL + "/releases/tag/" + version,
+    // IT-facing MDM deployment guide, read on GitHub rather than served by this page.
+    "deployment-doc": REPO_URL + "/blob/main/docs/deployment.md",
+  };
+
+  document.querySelectorAll("[data-link]").forEach(function (el) {
+    const target = destinations[el.dataset.link];
+    if (target) { el.setAttribute("href", target); }
+  });
+
+  // ─── Release links ─────────────────────────────────────────────────────────
+  // Every GitHub URL in the release notes is derived from the block's `data-release`
+  // version, so publishing a new release means adding one markup block — not hand-writing
+  // a tag URL, a notes URL, a .dmg URL and a compare URL and hoping they all match.
+  //
+  // GitHub's own conventions:
+  //   /releases/tag/<v>                     the release + its notes
+  //   /tree/<v>                             the source at that tag
+  //   /releases/download/<v>/<asset>        a release asset
+  //   /compare/<older>...<newer>            the diff between two tags
+  document.querySelectorAll(".release[data-release]").forEach(function (block) {
+    const v = block.dataset.release;
+
+    function set(selector, href, label) {
+      const el = block.querySelector(selector);
+      if (!el) { return; }
+      el.setAttribute("href", href);
+      // These point off-site, so open in a new tab and tell assistive tech as much.
+      if (/^https?:/.test(href)) {
+        el.setAttribute("target", "_blank");
+        el.setAttribute("rel", "noopener");
+      }
+      if (label) { el.setAttribute("title", label); }
+    }
+
+    set("[data-release-tag]", REPO_URL + "/releases/tag/" + v, "Tag " + v + " on GitHub");
+    set("[data-release-notes]", REPO_URL + "/releases/tag/" + v, "Full release notes for " + v);
+    set(
+      "[data-release-dmg]",
+      REPO_URL + "/releases/download/" + v + "/m_tools-" + v + ".dmg",
+      "Download m_tools-" + v + ".dmg"
+    );
+
+    const compare = block.querySelector("[data-release-compare]");
+    if (compare && compare.dataset.releasePrevious) {
+      const previous = compare.dataset.releasePrevious;
+      set(
+        "[data-release-compare]",
+        REPO_URL + "/compare/" + previous + "..." + v,
+        "Changes between " + previous + " and " + v
+      );
+    } else if (compare) {
+      // No previous version to diff against (the first release) — drop the chip rather
+      // than leave a link that would 404.
+      compare.remove();
+    }
+  });
+
+  // ─── Motion ────────────────────────────────────────────────────────────────
+  // Marks the document as scripted. The reveal animations' hidden starting state is
+  // scoped to `.js`, so if this script never runs the page just renders fully visible
+  // instead of blank.
+  document.documentElement.classList.add("js");
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Reveal on scroll. Sections, cards, tables and release blocks fade up as they enter
+  // the viewport; cards within a row stagger so a group doesn't pop in all at once.
+  const revealTargets = document.querySelectorAll(
+    "section > h2, section > .section-sub, .card, .group, .release, ol.steps > li, .note, #support .cta-row, #support .meta"
+  );
+
+  revealTargets.forEach(function (el) { el.classList.add("reveal"); });
+
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    // No observer (or motion is unwelcome) — show everything immediately.
+    revealTargets.forEach(function (el) { el.classList.add("in"); });
+  } else {
+    const revealObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) { return; }
+        // Stagger only within a shared parent, so the delay resets per group rather
+        // than growing down the whole page.
+        const siblings = Array.prototype.filter.call(
+          entry.target.parentElement.children,
+          function (child) { return child.classList.contains("reveal"); }
+        );
+        const index = siblings.indexOf(entry.target);
+        entry.target.style.transitionDelay = Math.min(index, 5) * 60 + "ms";
+        entry.target.classList.add("in");
+        revealObserver.unobserve(entry.target); // one-way: no re-hiding on scroll back up
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+
+    revealTargets.forEach(function (el) { revealObserver.observe(el); });
+  }
+
+  // Scroll-spy: highlight the nav link for whichever section is currently in view.
+  const navLinks = Array.prototype.slice.call(document.querySelectorAll(".topbar nav a"));
+  const sections = navLinks
+    .map(function (link) { return document.querySelector(link.getAttribute("href")); })
+    .filter(Boolean);
+
+  function setActive(id) {
+    navLinks.forEach(function (link) {
+      link.classList.toggle("active", link.getAttribute("href") === "#" + id);
+    });
+  }
+
+  if ("IntersectionObserver" in window && sections.length) {
+    // The top margin matches the sticky header, so a section counts as "current" only
+    // once it's actually visible below the bar rather than hidden behind it.
+    const spy = new IntersectionObserver(function (entries) {
+      const visible = entries
+        .filter(function (e) { return e.isIntersecting; })
+        .sort(function (a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+      if (visible.length) { setActive(visible[0].target.id); }
+    }, { rootMargin: "-78px 0px -55% 0px", threshold: 0 });
+
+    sections.forEach(function (section) { spy.observe(section); });
+  }
+
+  // Reading progress + back-to-top visibility, both driven by one scroll handler that
+  // defers its work to the next animation frame (scroll events fire far faster than the
+  // screen refreshes, so doing layout reads on every one of them is wasted work).
+  const progress = document.getElementById("progress");
+  const toTop = document.getElementById("to-top");
+  let ticking = false;
+
+  function onScroll() {
+    const scrolled = window.scrollY;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max > 0 ? (scrolled / max) * 100 : 0) + "%";
+    toTop.classList.toggle("show", scrolled > 600);
+    ticking = false;
+  }
+
+  window.addEventListener("scroll", function () {
+    if (ticking) { return; }
+    ticking = true;
+    window.requestAnimationFrame(onScroll);
+  }, { passive: true });
+
+  onScroll();
+
+  toTop.addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+  });
+
+  // Smooth scrolling comes from `html { scroll-behavior: smooth }`, but the default jump
+  // also leaves the URL hash unchanged on some browsers and skips the header offset that
+  // `scroll-margin-top` handles. Intercepting lets us keep the hash in sync (so the link
+  // is shareable and Back works) without a second visible jump.
+  document.querySelectorAll('.topbar nav a[href^="#"]').forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      const target = document.querySelector(link.getAttribute("href"));
+      if (!target) { return; }
+      event.preventDefault();
+      target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      // Some browsers reject pushState on a file:// URL, which would otherwise throw and
+      // abort the handler — the scroll above has already happened, so the hash is optional.
+      try {
+        history.pushState(null, "", link.getAttribute("href"));
+      } catch (error) {
+        /* opened straight from disk; keep the URL as-is */
+      }
+      setActive(target.id);
+    });
+  });
+</script>
+
+</body>
+</html>

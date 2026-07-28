@@ -1,0 +1,8 @@
+build/
+*.dmg
+*.pkg
+*.p12
+.DS_Store
+*.swiftmodule
+*.swiftdoc
+m_tools.zip
