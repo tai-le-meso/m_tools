@@ -1,71 +1,39 @@
 #!/bin/bash
 # Compiles and runs the logic smoke tests.
 #
-# Why this script exists: the test file can't simply be compiled against all of Sources/ —
-# Sources/main.swift has top-level statements that start the app, and so does
-# tests/main.swift, and Swift permits only one file with top-level code per module. So the
-# test target has to name its files explicitly. Keeping that list here (rather than in a
-# comment at the top of the test file, where it silently went stale) means CI and a
-# developer running tests by hand always use the same list.
+# The test binary is "the whole app, with its entry point swapped for the tests". That's the
+# only split that actually works here, because every file under Sources/Tools/ contains both
+# a tool's pure `Logic` enum *and* its SwiftUI `View` — so the logic cannot be compiled
+# without the view layer sitting next to it, which in turn pulls in ToolView, Theme,
+# Components, and so on.
 #
-# tests/main.swift is named that way because Swift only permits top-level statements in a
-# file called exactly main.swift — see the header comment in that file.
+# Hence exactly one exclusion: Sources/main.swift. It holds the app's top-level startup
+# statements, tests/main.swift holds the tests' own, and Swift permits only one file with
+# top-level code per module. Everything else under Sources/ comes along.
 #
-# Rule of thumb when adding a file: pure-logic files (Sources/Core/*, Sources/Tools/*'s
-# Logic enums) belong here; view files don't, because the tests never touch SwiftUI.
-# Sources/Tools/CSVEditorTool.swift is deliberately absent for that reason — it's pure view,
-# with all of its testable behavior living in Sources/Core/CSVDocument.swift.
+# The list is derived with `find` rather than enumerated by hand on purpose. The previous
+# version of this script spelled out 33 paths, and that list was both wrong (it omitted the
+# view files the tool files depend on) and exactly the kind of thing that rots silently
+# every time a file is added.
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$DIR/build/logic_tests"
 mkdir -p "$DIR/build"
 
-SOURCES=(
-    "$DIR/tests/main.swift"
-    "$DIR/Sources/ToolRegistry.swift"
-    "$DIR/Sources/Core/YAMLParser.swift"
-    "$DIR/Sources/Core/HTMLParser.swift"
-    "$DIR/Sources/Core/CSSParser.swift"
-    "$DIR/Sources/Core/ULID.swift"
-    "$DIR/Sources/Core/CSVDocument.swift"
-    "$DIR/Sources/Core/SyntaxHighlighter.swift"
-    "$DIR/Sources/Core/DataTree.swift"
-    "$DIR/Sources/Tools/JSONFormatter.swift"
-    "$DIR/Sources/Tools/Base64Tool.swift"
-    "$DIR/Sources/Tools/HashGenerator.swift"
-    "$DIR/Sources/Tools/YAMLTool.swift"
-    "$DIR/Sources/Tools/HTMLTool.swift"
-    "$DIR/Sources/Tools/CSSTool.swift"
-    "$DIR/Sources/Tools/XMLTool.swift"
-    "$DIR/Sources/Tools/LineSortDedupeTool.swift"
-    "$DIR/Sources/Tools/URLParserTool.swift"
-    "$DIR/Sources/Tools/NumberBaseConverterTool.swift"
-    "$DIR/Sources/Tools/StringCaseConverterTool.swift"
-    "$DIR/Sources/Tools/HexAsciiTool.swift"
-    "$DIR/Sources/Tools/JSONCSVTool.swift"
-    "$DIR/Sources/Tools/PHPSerializeTool.swift"
-    "$DIR/Sources/Tools/SVGToCSSTool.swift"
-    "$DIR/Sources/Tools/UnixTimeConverterTool.swift"
-    "$DIR/Sources/Tools/JWTDebuggerTool.swift"
-    "$DIR/Sources/Tools/StringInspectorTool.swift"
-    "$DIR/Sources/Tools/UUIDULIDTool.swift"
-    "$DIR/Sources/Tools/LoremIpsumTool.swift"
-    "$DIR/Sources/Tools/RandomStringTool.swift"
-    "$DIR/Sources/Tools/URLEncodeDecodeTool.swift"
-    "$DIR/Sources/Tools/HTMLEntityTool.swift"
-    "$DIR/Sources/Tools/BackslashEscapeTool.swift"
-)
+SOURCES=("$DIR/tests/main.swift")
+while IFS= read -r -d '' f; do
+    SOURCES+=("$f")
+done < <(find "$DIR/Sources" -name '*.swift' ! -path "$DIR/Sources/main.swift" -print0)
 
-# Fail loudly on a path typo rather than letting swiftc report a confusing missing-symbol
-# error much later.
-for file in "${SOURCES[@]}"; do
-    [ -f "$file" ] || { echo "tests/run.sh: missing source: $file" >&2; exit 1; }
-done
+# Guard against a silent no-op if this is ever run from an unexpected location.
+if [ "${#SOURCES[@]}" -lt 2 ]; then
+    echo "tests/run.sh: found no Swift sources under $DIR/Sources" >&2
+    exit 1
+fi
 
 echo "==> Compiling logic tests (${#SOURCES[@]} files)"
-# The tool files pull in SwiftUI for their View types even though the tests only exercise
-# the Logic enums, so the same frameworks the app links against are needed here too.
+# Same framework set as build.sh, since this compiles the same code.
 swiftc -swift-version 5 -O -target "$(uname -m)-apple-macos13.0" \
     -o "$OUT" \
     "${SOURCES[@]}" \

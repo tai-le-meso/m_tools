@@ -80,7 +80,7 @@ m_tools/
 │   └── makeicon.swift                    # generates .icns in code, no image assets
 ├── tests/
 │   ├── main.swift                        # simple assert-based smoke tests, compiled standalone
-│   └── run.sh                            # compiles + runs them; owns the source file list
+│   └── run.sh                            # compiles + runs them (all of Sources/ bar main.swift)
 ├── docs/                                  # optional landing site (GitHub Pages), mirrors m_capture
 └── .github/workflows/release.yml
 ```

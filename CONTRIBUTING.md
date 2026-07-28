@@ -32,11 +32,15 @@ the DMG. No Xcode project, no SPM, no `Package.swift` — one script is the whol
 ./tests/run.sh
 ```
 
-Plain assert-based smoke tests over the pure-logic types — no XCTest (there's no Xcode
-project to host a test target). `tests/run.sh` holds the list of files the test binary
-compiles against, because the test file and `Sources/main.swift` both have top-level code
-and Swift allows only one such file per module, so the target can't just be "all of
-`Sources/`". Add pure-logic files to that list; view files don't belong there.
+Plain assert-based smoke tests — no XCTest (there's no Xcode project to host a test
+target). The test binary is the whole app with its entry point swapped for the tests:
+`tests/run.sh` compiles everything under `Sources/` *except* `Sources/main.swift`, whose
+top-level startup statements would collide with the tests' own (Swift permits only one
+file with top-level code per module).
+
+There's no file list to maintain — adding a tool needs no change here. Note that the logic
+can't be compiled on its own, because each `Sources/Tools/*.swift` holds both a tool's
+`Logic` enum and its SwiftUI `View`.
 
 ## First-time repo setup
 
