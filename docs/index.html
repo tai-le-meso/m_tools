@@ -2,11 +2,14 @@
 <!--
   m_tools — internal distribution page.
 
-  ▸ BEFORE PUBLISHING: set REPO_URL in the small script at the bottom of this file to the
-    real internal repo (e.g. https://github.com/mesoneer/m_tools). Every download / release
-    / issues link on this page is generated from that one constant.
-  ▸ Bump the version in the `data-version` attribute on <body> when you cut a release, and
-    add a matching entry to the "Release notes" section.
+  ▸ Every GitHub link is written out in full in the markup, so the page works with
+    JavaScript disabled and the hrefs are visible when reading the source. They all point at
+    https://github.com/tai-le-meso/m_tools — search and replace if the repo ever moves.
+  ▸ When you cut a release: bump `data-version` on <body>, update the version shown in the
+    hero pill / install step / Updating section, and copy the commented template in the
+    "Release notes" section (it has the URL patterns filled in).
+  ▸ The remaining script is presentation only — reveal-on-scroll, scroll-spy, progress bar.
+    Nothing on the page depends on it to be usable.
 
   Self-contained on purpose: no build step, no frameworks, no assets. Serve it from GitHub
   Pages or drop it on any intranet host.
@@ -653,8 +656,8 @@
       calls at all, so it's safe for production payloads, tokens, and customer data.
     </p>
     <div class="cta-row">
-      <a class="btn" data-link="latest-download" href="#install">Download for macOS</a>
-      <span class="pill" data-version-label>v0.1.0</span>
+      <a class="btn" href="https://github.com/tai-le-meso/m_tools/releases/latest" target="_blank" rel="noopener">Download for macOS</a>
+      <span class="pill">v1.0.0</span>
       <span class="meta">Requires macOS 13 Ventura or later · Apple silicon &amp; Intel</span>
     </div>
   </div>
@@ -800,8 +803,8 @@
     <ol class="steps">
       <li>
         <strong>Download the disk image</strong>
-        Grab <code data-dmg-name>m_tools-0.1.0.dmg</code> from the
-        <a data-link="latest-release" href="#">latest release</a> — or jump to
+        Grab <code>m_tools-1.0.0.dmg</code> from the
+        <a href="https://github.com/tai-le-meso/m_tools/releases/latest" target="_blank" rel="noopener">latest release</a> — or jump to
         <a href="#releases">the release notes</a> to see what changed first.
       </li>
       <li>
@@ -844,7 +847,7 @@
       There's a <code>.pkg</code> built for exactly this. An MDM installs it as root, so
       there's no admin prompt <em>and</em> no "cannot be verified" warning — and updates
       arrive the same way, silently. Point them at
-      <a data-link="deployment-doc" href="#">docs/deployment.md</a> in the repo — the
+      <a href="https://github.com/tai-le-meso/m_tools/blob/trunk/docs/deployment.md" target="_blank" rel="noopener">docs/deployment.md</a> in the repo — the
       package is attached to every release alongside the .dmg.
     </div>
 
@@ -892,8 +895,8 @@ open ~/Applications/m_tools.app</code></pre>
       <li>
         <strong>Compare against the latest release</strong>
         The current version is
-        <strong><a data-link="current-tag" href="#"><span data-version-label>0.1.0</span></a></strong>
-        — see <a data-link="releases" href="#">all releases</a>, or the
+        <strong><a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.0.0" target="_blank" rel="noopener">1.0.0</a></strong>
+        — see <a href="https://github.com/tai-le-meso/m_tools/releases" target="_blank" rel="noopener">all releases</a>, or the
         <a href="#releases">release notes below</a>.
       </li>
       <li>
@@ -918,7 +921,7 @@ open ~/Applications/m_tools.app</code></pre>
     <p class="section-sub">
       Newest first. Every release is built and signed by CI from a version tag, so each
       version below corresponds to a real tag and a published build —
-      <a data-link="releases" href="#">browse them all on GitHub</a>.
+      <a href="https://github.com/tai-le-meso/m_tools/releases" target="_blank" rel="noopener">browse them all on GitHub</a>.
     </p>
 
     <!--
@@ -926,17 +929,17 @@ open ~/Applications/m_tools.app</code></pre>
       the GitHub release-notes link, and the .dmg download URL from it plus REPO_URL, so
       adding a release never means hand-writing five GitHub URLs.
     -->
-    <div class="release" id="v1-0-0" data-release="1.0.0">
+    <div class="release" id="v1-0-0">
       <div class="release-head">
-        <h3><a data-release-tag href="#">1.0.0</a></h3>
+        <h3><a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.0.0" target="_blank" rel="noopener" title="Tag 1.0.0 on GitHub">1.0.0</a></h3>
         <span class="tag-current">Current</span>
         <span class="meta">First internal release</span>
       </div>
       <div class="release-links">
-        <a data-release-notes href="#">Release notes on GitHub&nbsp;↗</a>
-        <a data-release-dmg href="#">Download&nbsp;.dmg</a>
-        <a data-release-pkg href="#" title="Installer package for MDM deployment">Download&nbsp;.pkg</a>
-        <a data-release-permalink href="#v1-0-0" title="Link to this release on this page">Permalink</a>
+        <a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.0.0" target="_blank" rel="noopener">Release notes on GitHub&nbsp;↗</a>
+        <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.0.0/m_tools-1.0.0.dmg" target="_blank" rel="noopener">Download&nbsp;.dmg</a>
+        <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.0.0/m_tools-1.0.0.pkg" target="_blank" rel="noopener" title="Installer package for MDM deployment">Download&nbsp;.pkg</a>
+        <a href="#v1-0-0" title="Link to this release on this page">Permalink</a>
       </div>
       <p style="margin-top:0;color:var(--muted);font-size:14px">
         The initial rollout: 26 tools, the shared two-pane workspace, and the CSV editor.
@@ -962,22 +965,26 @@ open ~/Applications/m_tools.app</code></pre>
     </div>
 
     <!--
-      TEMPLATE — copy this block for the next release, put it above 0.1.0, move the
-      "Current" badge onto it, and update <body data-version>. The id follows the version
-      with dots as dashes (0.2.0 → v0-2-0) so the permalink is stable; every GitHub URL
-      is generated from data-release.
+      TEMPLATE for the next release. Copy the block below, put it above 1.0.0, move the
+      "Current" badge onto it, and update <body data-version>. Replace 1.0.1 with the new
+      version and 1.0.0 with the one it follows — the URLs are GitHub's own conventions:
 
-      <div class="release" id="v0-2-0" data-release="0.2.0">
+        /releases/tag/<version>                     the release and its notes
+        /releases/download/<version>/<asset>        a release asset
+        /compare/<older>...<newer>                  the diff between two tags
+
+      <div class="release" id="v1-0-1">
         <div class="release-head">
-          <h3><a data-release-tag href="#">0.2.0</a></h3>
+          <h3><a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.0.1" target="_blank" rel="noopener">1.0.1</a></h3>
           <span class="tag-current">Current</span>
           <span class="meta">Released YYYY-MM-DD</span>
         </div>
         <div class="release-links">
-          <a data-release-notes href="#">Release notes on GitHub&nbsp;↗</a>
-          <a data-release-dmg href="#">Download&nbsp;.dmg</a>
-          <a data-release-compare data-release-previous="0.1.0" href="#">Compare with 0.1.0&nbsp;↗</a>
-          <a data-release-permalink href="#v0-2-0">Permalink</a>
+          <a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.0.1" target="_blank" rel="noopener">Release notes on GitHub&nbsp;↗</a>
+          <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.0.1/m_tools-1.0.1.dmg" target="_blank" rel="noopener">Download&nbsp;.dmg</a>
+          <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.0.1/m_tools-1.0.1.pkg" target="_blank" rel="noopener" title="Installer package for MDM deployment">Download&nbsp;.pkg</a>
+          <a href="https://github.com/tai-le-meso/m_tools/compare/1.0.0...1.0.1" target="_blank" rel="noopener">Compare with 1.0.0&nbsp;↗</a>
+          <a href="#v1-0-1" title="Link to this release on this page">Permalink</a>
         </div>
         <ul>
           <li><strong>Added</strong> — …</li>
@@ -995,8 +1002,8 @@ open ~/Applications/m_tools.app</code></pre>
       gets built next.
     </p>
     <div class="cta-row">
-      <a class="btn secondary" data-link="issues" href="#">Open an issue</a>
-      <a class="btn secondary" data-link="repo" href="#">View the source</a>
+      <a class="btn secondary" href="https://github.com/tai-le-meso/m_tools/issues/new" target="_blank" rel="noopener">Open an issue</a>
+      <a class="btn secondary" href="https://github.com/tai-le-meso/m_tools" target="_blank" rel="noopener">View the source</a>
     </div>
     <p class="meta" style="margin-top:20px">
       When reporting a bug, it helps to include your macOS version, the m_tools version,
@@ -1025,96 +1032,6 @@ open ~/Applications/m_tools.app</code></pre>
 <button id="to-top" type="button" aria-label="Back to top" title="Back to top">↑</button>
 
 <script>
-  // ─── EDIT THIS ─────────────────────────────────────────────────────────────
-  // Point this at the internal repo. Every link on the page is derived from it,
-  // so this is the only line that needs changing when the repo moves.
-  const REPO_URL = "https://github.com/tai-le-meso/m_tools";
-  // ───────────────────────────────────────────────────────────────────────────
-
-  const version = document.body.dataset.version;
-
-  // Keep every version label on the page in sync with <body data-version>.
-  document.querySelectorAll("[data-version-label]").forEach(function (el) {
-    el.textContent = el.classList.contains("pill") ? "v" + version : version;
-  });
-
-  const dmgName = "m_tools-" + version + ".dmg";
-  document.querySelectorAll("[data-dmg-name]").forEach(function (el) {
-    el.textContent = dmgName;
-  });
-
-  const destinations = {
-    repo: REPO_URL,
-    issues: REPO_URL + "/issues/new",
-    releases: REPO_URL + "/releases",
-    // Resolves to whatever the newest published release attached, so these keep working
-    // after a version bump without anyone editing this file.
-    "latest-download": REPO_URL + "/releases/latest",
-    "latest-release": REPO_URL + "/releases/latest",
-    // The tag matching the version this page currently advertises.
-    "current-tag": REPO_URL + "/releases/tag/" + version,
-    // IT-facing MDM deployment guide, read on GitHub rather than served by this page.
-    "deployment-doc": REPO_URL + "/blob/main/docs/deployment.md",
-  };
-
-  document.querySelectorAll("[data-link]").forEach(function (el) {
-    const target = destinations[el.dataset.link];
-    if (target) { el.setAttribute("href", target); }
-  });
-
-  // ─── Release links ─────────────────────────────────────────────────────────
-  // Every GitHub URL in the release notes is derived from the block's `data-release`
-  // version, so publishing a new release means adding one markup block — not hand-writing
-  // a tag URL, a notes URL, a .dmg URL and a compare URL and hoping they all match.
-  //
-  // GitHub's own conventions:
-  //   /releases/tag/<v>                     the release + its notes
-  //   /tree/<v>                             the source at that tag
-  //   /releases/download/<v>/<asset>        a release asset
-  //   /compare/<older>...<newer>            the diff between two tags
-  document.querySelectorAll(".release[data-release]").forEach(function (block) {
-    const v = block.dataset.release;
-
-    function set(selector, href, label) {
-      const el = block.querySelector(selector);
-      if (!el) { return; }
-      el.setAttribute("href", href);
-      // These point off-site, so open in a new tab and tell assistive tech as much.
-      if (/^https?:/.test(href)) {
-        el.setAttribute("target", "_blank");
-        el.setAttribute("rel", "noopener");
-      }
-      if (label) { el.setAttribute("title", label); }
-    }
-
-    set("[data-release-tag]", REPO_URL + "/releases/tag/" + v, "Tag " + v + " on GitHub");
-    set("[data-release-notes]", REPO_URL + "/releases/tag/" + v, "Full release notes for " + v);
-    set(
-      "[data-release-dmg]",
-      REPO_URL + "/releases/download/" + v + "/m_tools-" + v + ".dmg",
-      "Download m_tools-" + v + ".dmg"
-    );
-    set(
-      "[data-release-pkg]",
-      REPO_URL + "/releases/download/" + v + "/m_tools-" + v + ".pkg",
-      "Installer package for MDM deployment (m_tools-" + v + ".pkg)"
-    );
-
-    const compare = block.querySelector("[data-release-compare]");
-    if (compare && compare.dataset.releasePrevious) {
-      const previous = compare.dataset.releasePrevious;
-      set(
-        "[data-release-compare]",
-        REPO_URL + "/compare/" + previous + "..." + v,
-        "Changes between " + previous + " and " + v
-      );
-    } else if (compare) {
-      // No previous version to diff against (the first release) — drop the chip rather
-      // than leave a link that would 404.
-      compare.remove();
-    }
-  });
-
   // ─── Motion ────────────────────────────────────────────────────────────────
   // Marks the document as scripted. The reveal animations' hidden starting state is
   // scoped to `.js`, so if this script never runs the page just renders fully visible
