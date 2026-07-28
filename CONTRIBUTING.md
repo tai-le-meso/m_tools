@@ -99,13 +99,13 @@ path — see `docs/deployment.md`.
 3. Build the view using the shared `ToolView` two-pane layout.
 4. Register the tool in `ToolRegistry.swift` (name, category, keywords for search/smart-detect).
 5. Add a case to `Detection.swift` if the tool should be clipboard-auto-detected.
-6. Add a smoke-test entry in `tests/logic_tests.swift`.
+6. Add a smoke-test entry in `tests/main.swift`.
 
 ## Testing
 
 No formal test framework (no Xcode project to host an XCTest target) — a small standalone
-`tests/logic_tests.swift` asserts against each tool's pure logic functions, compiled and run
-directly (`swiftc -O tests/logic_tests.swift Sources/**/*.swift ... && ./a.out`), plus manual
+`tests/main.swift` asserts against each tool's pure logic functions, compiled and run
+directly by `./tests/run.sh`, plus manual
 smoke-testing after a build. Cover what your change touches, plus a baseline pass:
 
 - **Sidebar & search** — filtering and category grouping work.

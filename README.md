@@ -125,7 +125,7 @@ docs/deployment.md   IT-facing: MDM .pkg deployment, and installing without admi
 docs/                architecture plan, task plan, design system reference
 .github/workflows/   ci.yml (build + tests on every push) and release.yml (tag → signed DMG)
 tools/makeicon.swift  draws the app icon in code and writes the multi-res .icns
-tests/logic_tests.swift  standalone smoke tests, no XCTest needed
+tests/main.swift        standalone smoke tests (run via tests/run.sh)
 build.sh             the entire build system
 ```
 

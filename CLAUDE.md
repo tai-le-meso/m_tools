@@ -28,7 +28,7 @@ layout.
 - **Tool logic stays pure.** Each tool's transform is a `static func run(_ input:
   String) throws -> String` conforming to `DevToolLogic`, with zero SwiftUI imports.
   The View only binds to it via the shared `ToolView` component. This is what makes
-  `tests/logic_tests.swift` possible without XCTest/Xcode.
+  `tests/main.swift` possible without XCTest/Xcode.
 - **Comments explain *why*, not *what*.**
 
 ## Architecture at a glance

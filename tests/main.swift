@@ -1,37 +1,44 @@
-// Compile & run: swiftc -O tests/logic_tests.swift Sources/ToolRegistry.swift \
-//   Sources/Tools/JSONFormatter.swift Sources/Tools/Base64Tool.swift \
-//   Sources/Tools/HashGenerator.swift Sources/Core/YAMLParser.swift \
-//   Sources/Tools/YAMLTool.swift Sources/Core/HTMLParser.swift \
-//   Sources/Tools/HTMLTool.swift Sources/Core/CSSParser.swift \
-//   Sources/Tools/CSSTool.swift Sources/Tools/XMLTool.swift \
-//   Sources/Tools/LineSortDedupeTool.swift Sources/Tools/URLParserTool.swift \
-//   Sources/Tools/NumberBaseConverterTool.swift Sources/Tools/StringCaseConverterTool.swift \
-//   Sources/Tools/HexAsciiTool.swift Sources/Tools/JSONCSVTool.swift \
-//   Sources/Tools/PHPSerializeTool.swift Sources/Tools/SVGToCSSTool.swift \
-//   Sources/Tools/UnixTimeConverterTool.swift Sources/Tools/JWTDebuggerTool.swift \
-//   Sources/Tools/StringInspectorTool.swift Sources/Core/ULID.swift \
-//   Sources/Tools/UUIDULIDTool.swift Sources/Tools/LoremIpsumTool.swift \
-//   Sources/Tools/RandomStringTool.swift Sources/Tools/URLEncodeDecodeTool.swift \
-//   Sources/Tools/HTMLEntityTool.swift Sources/Tools/BackslashEscapeTool.swift \
-//   Sources/Core/CSVDocument.swift Sources/Core/SyntaxHighlighter.swift \
-//   Sources/Core/DataTree.swift \
-//   -framework CryptoKit \
-//   -o build/logic_tests && ./build/logic_tests
+// Smoke tests for the pure-logic types. Run them with:
 //
-// No XCTest target (no Xcode project to host one) — plain assert-based smoke tests,
-// matching the "no automated suite, smoke-test by hand" spirit but automatable in CI.
+//     ./tests/run.sh
+//
+// That script owns the list of source files this compiles against — keeping it there rather
+// than in a comment here is deliberate: the comment that used to live at the top of this
+// file drifted out of date, silently, because nothing ever executed it.
+//
+// WHY THIS FILE IS CALLED main.swift: Swift only allows top-level statements (the bare
+// `print(...)`/`check(...)` calls below) in a file named exactly `main.swift`. In any other
+// filename, compiling alongside other files fails with "expressions are not allowed at the
+// top level". The app's own entry point is Sources/main.swift; the two are never compiled
+// into the same binary, so the shared name is harmless.
+//
+// No XCTest target (no Xcode project to host one) — plain assert-based checks, automatable
+// in CI all the same.
 
 import Foundation
 
 var failures = 0
 
-func check(_ name: String, _ condition: @autoclosure () -> Bool) {
-    if condition() {
+/// Takes a plain `Bool`, not an `@autoclosure () -> Bool`. The autoclosure bought nothing
+/// here (every assertion is independent, so there's no work worth deferring) and actively
+/// broke the ten `check("...") { ... }` call sites below: you cannot hand a closure literal
+/// to an autoclosure parameter, which is what "add () to forward @autoclosure parameter"
+/// was complaining about.
+func check(_ name: String, _ condition: Bool) {
+    if condition {
         print("  ok  - \(name)")
     } else {
         print("  FAIL - \(name)")
         failures += 1
     }
+}
+
+/// Multi-statement variant, for checks whose body needs a `do`/`catch` — i.e. "does this
+/// throw?". The `block:` label is what makes it unambiguous against the overload above,
+/// while call sites still get plain trailing-closure syntax, because a trailing closure
+/// drops its argument label.
+func check(_ name: String, block: () -> Bool) {
+    check(name, block())
 }
 
 print("JSONFormatterLogic")

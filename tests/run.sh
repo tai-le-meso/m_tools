@@ -3,10 +3,13 @@
 #
 # Why this script exists: the test file can't simply be compiled against all of Sources/ —
 # Sources/main.swift has top-level statements that start the app, and so does
-# logic_tests.swift, and Swift permits only one file with top-level code per module. So the
+# tests/main.swift, and Swift permits only one file with top-level code per module. So the
 # test target has to name its files explicitly. Keeping that list here (rather than in a
-# comment at the top of logic_tests.swift, where it silently went stale) means CI and a
+# comment at the top of the test file, where it silently went stale) means CI and a
 # developer running tests by hand always use the same list.
+#
+# tests/main.swift is named that way because Swift only permits top-level statements in a
+# file called exactly main.swift — see the header comment in that file.
 #
 # Rule of thumb when adding a file: pure-logic files (Sources/Core/*, Sources/Tools/*'s
 # Logic enums) belong here; view files don't, because the tests never touch SwiftUI.
@@ -19,7 +22,7 @@ OUT="$DIR/build/logic_tests"
 mkdir -p "$DIR/build"
 
 SOURCES=(
-    "$DIR/tests/logic_tests.swift"
+    "$DIR/tests/main.swift"
     "$DIR/Sources/ToolRegistry.swift"
     "$DIR/Sources/Core/YAMLParser.swift"
     "$DIR/Sources/Core/HTMLParser.swift"
