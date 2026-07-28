@@ -5,7 +5,7 @@ name: CI
 # so the build itself is the most valuable check here.
 on:
   push:
-    branches: [main]
+    branches: [trunk]
   pull_request:
 
 jobs:
