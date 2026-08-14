@@ -5,7 +5,7 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD="$DIR/build"
 APP="$BUILD/m_tools.app"
-VERSION="1.0.0"
+VERSION="1.1.0"
 BUNDLE_ID="io.internal.mtools"
 
 # `./build.sh --run` quits any running instance, relaunches from build/, and

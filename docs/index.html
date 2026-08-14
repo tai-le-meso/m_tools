@@ -610,7 +610,7 @@
 </style>
 </head>
 
-<body data-version="1.0.0">
+<body data-version="1.1.0">
 
 <!--
   The app icon, defined once and referenced with <use> wherever it appears. Same artwork
@@ -652,12 +652,13 @@
     <h1>Your developer toolbox,<br>entirely offline.<span class="caret" aria-hidden="true"></span></h1>
     <p class="lede">
       26 everyday tools — JSON, YAML, XML, CSV, hashing, JWTs, encoders — in one native
-      macOS app. Nothing you paste ever leaves your machine: the app makes no network
-      calls at all, so it's safe for production payloads, tokens, and customer data.
+      macOS app, or straight from the menu bar over whatever you just copied. Nothing you
+      paste ever leaves your machine: the app makes no network calls at all, so it's safe
+      for production payloads, tokens, and customer data.
     </p>
     <div class="cta-row">
       <a class="btn" href="https://github.com/tai-le-meso/m_tools/releases/latest" target="_blank" rel="noopener">Download for macOS</a>
-      <span class="pill">v1.0.0</span>
+      <span class="pill">v1.1.0</span>
       <span class="meta">Requires macOS 13 Ventura or later · Apple silicon &amp; Intel</span>
     </div>
   </div>
@@ -670,6 +671,14 @@
     </p>
 
     <div class="cards">
+      <div class="card">
+        <h4>Quick Actions from the menu bar</h4>
+        <p>
+          Copy something, pick a conversion from the menu bar, and it opens on that tool with
+          your clipboard already in it — result copied back, ready to paste. Choose which
+          actions appear and in what order.
+        </p>
+      </div>
       <div class="card">
         <h4>Nothing leaves your machine</h4>
         <p>
@@ -803,7 +812,7 @@
     <ol class="steps">
       <li>
         <strong>Download the disk image</strong>
-        Grab <code>m_tools-1.0.0.dmg</code> from the
+        Grab <code>m_tools-1.1.0.dmg</code> from the
         <a href="https://github.com/tai-le-meso/m_tools/releases/latest" target="_blank" rel="noopener">latest release</a> — or jump to
         <a href="#releases">the release notes</a> to see what changed first.
       </li>
@@ -895,7 +904,7 @@ open ~/Applications/m_tools.app</code></pre>
       <li>
         <strong>Compare against the latest release</strong>
         The current version is
-        <strong><a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.0.0" target="_blank" rel="noopener">1.0.0</a></strong>
+        <strong><a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.1.0" target="_blank" rel="noopener">1.1.0</a></strong>
         — see <a href="https://github.com/tai-le-meso/m_tools/releases" target="_blank" rel="noopener">all releases</a>, or the
         <a href="#releases">release notes below</a>.
       </li>
@@ -929,10 +938,44 @@ open ~/Applications/m_tools.app</code></pre>
       the GitHub release-notes link, and the .dmg download URL from it plus REPO_URL, so
       adding a release never means hand-writing five GitHub URLs.
     -->
+    <div class="release" id="v1-1-0">
+      <div class="release-head">
+        <h3><a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.1.0" target="_blank" rel="noopener" title="Tag 1.1.0 on GitHub">1.1.0</a></h3>
+        <span class="tag-current">Current</span>
+        <span class="meta">Released 2026-08-14</span>
+      </div>
+      <div class="release-links">
+        <a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.1.0" target="_blank" rel="noopener">Release notes on GitHub&nbsp;↗</a>
+        <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.1.0/m_tools-1.1.0.dmg" target="_blank" rel="noopener">Download&nbsp;.dmg</a>
+        <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.1.0/m_tools-1.1.0.pkg" target="_blank" rel="noopener" title="Installer package for MDM deployment">Download&nbsp;.pkg</a>
+        <a href="https://github.com/tai-le-meso/m_tools/compare/1.0.0...1.1.0" target="_blank" rel="noopener">Compare with 1.0.0&nbsp;↗</a>
+        <a href="#v1-1-0" title="Link to this release on this page">Permalink</a>
+      </div>
+      <p style="margin-top:0;color:var(--muted);font-size:14px">
+        Quick Actions — convert whatever is on your clipboard straight from the menu bar,
+        without opening the app first.
+      </p>
+      <ul>
+        <li><strong>Quick Actions in the menu bar</strong> — copy something, pick a
+          conversion (JSON → YAML, Decode JWT, Base64, Beautify XML, …), and m_tools runs it
+          on your clipboard and opens on that tool with the input already filled in.</li>
+        <li><strong>The result is copied back</strong> to your clipboard, ready to paste
+          somewhere else. Switch it off in Settings if you'd rather it didn't.</li>
+        <li><strong>Configurable list</strong> — 24 actions to choose from, 7 enabled by
+          default. Pick which appear and in what order under Settings; the first nine get
+          ⌘1–⌘9.</li>
+        <li><strong>Opens on the right mode</strong> — an action like Minify CSS lands on the
+          CSS tool with Minify already selected, not just on the tool.</li>
+        <li><strong>Failed conversions still open the tool</strong> with your text in it, so
+          the error appears next to the input that caused it.</li>
+        <li><strong>Fixed</strong> — the URL Parser no longer accepts text containing spaces
+          as if it were a relative path; it now explains that spaces must be percent-encoded.</li>
+      </ul>
+    </div>
+
     <div class="release" id="v1-0-0">
       <div class="release-head">
         <h3><a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.0.0" target="_blank" rel="noopener" title="Tag 1.0.0 on GitHub">1.0.0</a></h3>
-        <span class="tag-current">Current</span>
         <span class="meta">First internal release</span>
       </div>
       <div class="release-links">
@@ -965,9 +1008,9 @@ open ~/Applications/m_tools.app</code></pre>
     </div>
 
     <!--
-      TEMPLATE for the next release. Copy the block below, put it above 1.0.0, move the
+      TEMPLATE for the next release. Copy the block below, put it above 1.1.0, move the
       "Current" badge onto it, and update <body data-version>. Replace 1.0.1 with the new
-      version and 1.0.0 with the one it follows — the URLs are GitHub's own conventions:
+      version and 1.1.0 with the one it follows — the URLs are GitHub's own conventions:
 
         /releases/tag/<version>                     the release and its notes
         /releases/download/<version>/<asset>        a release asset
@@ -975,16 +1018,16 @@ open ~/Applications/m_tools.app</code></pre>
 
       <div class="release" id="v1-0-1">
         <div class="release-head">
-          <h3><a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.0.1" target="_blank" rel="noopener">1.0.1</a></h3>
+          <h3><a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.1.1" target="_blank" rel="noopener">1.1.1</a></h3>
           <span class="tag-current">Current</span>
           <span class="meta">Released YYYY-MM-DD</span>
         </div>
         <div class="release-links">
-          <a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.0.1" target="_blank" rel="noopener">Release notes on GitHub&nbsp;↗</a>
-          <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.0.1/m_tools-1.0.1.dmg" target="_blank" rel="noopener">Download&nbsp;.dmg</a>
-          <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.0.1/m_tools-1.0.1.pkg" target="_blank" rel="noopener" title="Installer package for MDM deployment">Download&nbsp;.pkg</a>
-          <a href="https://github.com/tai-le-meso/m_tools/compare/1.0.0...1.0.1" target="_blank" rel="noopener">Compare with 1.0.0&nbsp;↗</a>
-          <a href="#v1-0-1" title="Link to this release on this page">Permalink</a>
+          <a href="https://github.com/tai-le-meso/m_tools/releases/tag/1.1.1" target="_blank" rel="noopener">Release notes on GitHub&nbsp;↗</a>
+          <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.1.1/m_tools-1.1.1.dmg" target="_blank" rel="noopener">Download&nbsp;.dmg</a>
+          <a href="https://github.com/tai-le-meso/m_tools/releases/download/1.1.1/m_tools-1.1.1.pkg" target="_blank" rel="noopener" title="Installer package for MDM deployment">Download&nbsp;.pkg</a>
+          <a href="https://github.com/tai-le-meso/m_tools/compare/1.1.0...1.1.1" target="_blank" rel="noopener">Compare with 1.1.0&nbsp;↗</a>
+          <a href="#v1-1-1" title="Link to this release on this page">Permalink</a>
         </div>
         <ul>
           <li><strong>Added</strong> — …</li>
