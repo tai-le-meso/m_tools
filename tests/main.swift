@@ -584,5 +584,48 @@ check(
     }()
 )
 
+print("QuickActionCatalog")
+check(
+    "every action points at a tool that exists in the registry",
+    {
+        let toolIDs = Set(ToolRegistry.shared.all.map(\.id))
+        return QuickActionCatalog.all.allSatisfy { toolIDs.contains($0.toolId) }
+    }()
+)
+check(
+    "action ids are unique",
+    Set(QuickActionCatalog.all.map(\.id)).count == QuickActionCatalog.all.count
+)
+check(
+    "every default id resolves to a real action",
+    QuickActionCatalog.defaultIDs.allSatisfy { QuickActionCatalog.action(withID: $0) != nil }
+)
+check(
+    "actions(for:) preserves the given order",
+    QuickActionCatalog.actions(for: ["jwt-decode", "base64"]).map(\.id) == ["jwt-decode", "base64"]
+)
+check(
+    "actions(for:) drops ids that no longer exist rather than failing",
+    // Guards the upgrade path: a saved menu referencing a removed action must not strand
+    // the user with a broken entry.
+    QuickActionCatalog.actions(for: ["base64", "was-removed-in-a-later-build"]).map(\.id) == ["base64"]
+)
+check(
+    "a quick action produces the same output as its tool's logic",
+    {
+        guard let action = QuickActionCatalog.action(withID: "json-to-yaml") else { return false }
+        let input = #"{"name":"Tai"}"#
+        return (try? action.run(input)) == (try? JSONToYAMLLogic.run(input))
+    }()
+)
+check(
+    "mode-bearing actions carry a mode index, single-transform ones do not",
+    {
+        let minify = QuickActionCatalog.action(withID: "css-minify")
+        let jwt = QuickActionCatalog.action(withID: "jwt-decode")
+        return minify?.modeIndex == 1 && jwt?.modeIndex == nil
+    }()
+)
+
 print(failures == 0 ? "\nAll checks passed." : "\n\(failures) check(s) failed.")
 exit(failures == 0 ? 0 : 1)

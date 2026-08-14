@@ -97,6 +97,11 @@ These come from the shared `ToolView` layout, so every tool above gets them for 
   and copied without being editable.
 - **Light/dark toggle** — in the header; the sidebar stays fixed-dark per the design
   system.
+- **Quick Actions** — copy something, pick a conversion from the menu bar (JSON → YAML,
+  Decode JWT, Base64, …), and the app opens on that tool with your clipboard already in the
+  input. The result is copied back to the clipboard too, which can be turned off. Which
+  actions appear, and in what order, is configurable under Settings; the first nine get
+  ⌘1–⌘9.
 - **Menu bar item** — the app runs without a Dock icon; show the window or quit from the
   status item.
 
@@ -116,6 +121,8 @@ Sources/            all Swift source — no Xcode project, no SPM (see CONTRIBUT
   ToolView.swift       shared two-pane input/output layout every tool uses
   TreeOutlineView.swift  NSOutlineView-backed collapsible tree for JSON/YAML/XML output
   ToolRegistry.swift   single source of truth for available tools
+  QuickAction.swift    menu bar quick-action catalog + defaults
+  AppState.swift       shared navigation state, so the menu bar can drive the window
   ToolViewFactory.swift  maps a tool id to its SwiftUI view
   Core/                shared parsers: YAML, HTML, CSS, CSV, ULID, syntax, tree building
   Tools/               one file per tool: pure logic + SwiftUI view

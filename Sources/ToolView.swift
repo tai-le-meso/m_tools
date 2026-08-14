@@ -22,6 +22,9 @@ struct ToolView: View {
     }
 
     @Environment(\.colorScheme) private var colorScheme
+    /// Watched so a quick action can hand this view the clipboard text and, for multi-mode
+    /// tools, the mode that action corresponds to.
+    @ObservedObject private var appState = AppState.shared
     let title: String
     let modes: [Mode]
     /// Which syntax-highlighting rules to apply to the *output* pane — `.none` (the
@@ -119,7 +122,23 @@ struct ToolView: View {
         .onChange(of: selectedMode) { _ in runTransform(input) }
         // Runs once up front so generator-style tools (UUID, Lorem Ipsum, ...) show
         // something immediately rather than waiting on a first keystroke.
-        .onAppear { runTransform(input) }
+        //
+        // This also picks up anything a menu bar quick action left waiting. AppShellView
+        // rebuilds the tool view per navigation (its `.id` includes a navigation token), so
+        // this fires every time — including when the action targets the tool already shown.
+        .onAppear {
+            let pending = appState.consumePendingInput()
+            if let modeIndex = pending.modeIndex, modes.indices.contains(modeIndex) {
+                selectedMode = modeIndex
+            }
+            if let text = pending.input {
+                // Assigning `input` triggers `.onChange` above, which runs the transform —
+                // so no explicit run here, and no risk of running it twice.
+                input = text
+            } else {
+                runTransform(input)
+            }
+        }
         // The highlighted output bakes in themed colors, so a light/dark flip has to
         // rebuild it — it's a cache now, not a computed property that would just re-run.
         .onChange(of: colorScheme) { _ in refreshOutputViews() }

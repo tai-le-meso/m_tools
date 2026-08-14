@@ -9,21 +9,19 @@ import AppKit
 struct AppShellView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var searchText = ""
-    @State private var selectedToolId: String
     @State private var collapsedCategories: Set<ToolCategory> = []
+
+    /// Selection lives in `AppState`, not local `@State`, so the menu bar's quick actions
+    /// can navigate the window. It opens on the first registered tool — this app has no
+    /// home/dashboard screen, per docs/mesoneer-design-system.md intent.
+    @ObservedObject private var appState = AppState.shared
 
     private let registry = ToolRegistry.shared
 
     private var theme: Theme { Theme.current(for: colorScheme) }
 
-    init() {
-        // Open directly into a tool (the first registered one) — matches devutils.com,
-        // which has no home/dashboard screen, per docs/mesoneer-design-system.md intent.
-        _selectedToolId = State(initialValue: ToolRegistry.shared.all.first?.id ?? "")
-    }
-
     private var selectedTool: DevToolSummary? {
-        registry.all.first { $0.id == selectedToolId }
+        registry.all.first { $0.id == appState.selectedToolId }
     }
 
     var body: some View {
@@ -37,6 +35,9 @@ struct AppShellView: View {
         }
         .frame(minWidth: 960, minHeight: 640)
         .background(theme.bg)
+        .sheet(isPresented: $appState.isSettingsPresented) {
+            QuickActionSettingsView()
+        }
     }
 
     // MARK: Sidebar — fixed-dark regardless of app theme, per the source design
@@ -89,7 +90,7 @@ struct AppShellView: View {
                 badge: nil,
                 isActive: false,
                 colorScheme: colorScheme,
-                action: { /* open settings */ }
+                action: { appState.isSettingsPresented = true }
             )
 
             // Which build is running, in the conventional spot for it. Read from the bundle
@@ -153,9 +154,9 @@ struct AppShellView: View {
                             icon: tool.icon,
                             label: tool.name,
                             badge: nil,
-                            isActive: tool.id == selectedToolId,
+                            isActive: tool.id == appState.selectedToolId,
                             colorScheme: colorScheme,
-                            action: { selectedToolId = tool.id }
+                            action: { appState.navigate(toToolID: tool.id) }
                         )
                     }
                 }
@@ -214,6 +215,11 @@ struct AppShellView: View {
         Group {
             if let selectedTool {
                 ToolViewFactory.view(for: selectedTool.id)
+                    // Folding the navigation token into the identity forces a fresh
+                    // tool view per navigation, so `onAppear` fires and the pending
+                    // clipboard text is picked up — even when a quick action targets
+                    // the tool that is already on screen.
+                    .id("\(selectedTool.id)-\(appState.navigationToken)")
             } else {
                 VStack(spacing: 8) {
                     Image(systemName: "square.grid.2x2")

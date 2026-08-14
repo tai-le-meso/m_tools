@@ -1,8 +1,8 @@
 import AppKit
 
-/// Menu-bar icon + clipboard watcher, per Phase 3 of the task plan. This is a scaffold —
-/// wire in `Detection.swift` heuristics and a real popover/menu once tools exist to detect.
-final class MenuBarController {
+/// Menu-bar icon and its menu, which is where Quick Actions live: copy something, pick a
+/// conversion here, and the app opens on that tool with the clipboard already in it.
+final class MenuBarController: NSObject, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var lastChangeCount: Int = NSPasteboard.general.changeCount
     private var timer: Timer?
@@ -10,6 +10,7 @@ final class MenuBarController {
 
     init(showWindow: @escaping () -> Void) {
         self.showWindow = showWindow
+        super.init()
         setupStatusItem()
         startWatchingClipboard()
     }
@@ -18,10 +19,24 @@ final class MenuBarController {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.image = Self.menuBarIcon()
 
-        // The app runs as LSUIElement (no Dock icon, no standard app menu bar), so this
-        // status-item menu is the only way to reach Quit — clicking the toolbar icon alone
-        // used to just reopen the window with no way to quit at all.
         let menu = NSMenu()
+        // Rebuilt on every open (see `menuNeedsUpdate`) so edits in the settings sheet show
+        // up immediately — a menu built once at launch would keep showing the old list until
+        // the app restarted.
+        menu.delegate = self
+        item.menu = menu
+        statusItem = item
+        rebuild(menu)
+    }
+
+    // MARK: Menu construction
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        rebuild(menu)
+    }
+
+    private func rebuild(_ menu: NSMenu) {
+        menu.removeAllItems()
 
         // Informational header showing which build is running — disabled rather than
         // removed from the responder chain, which is the standard way macOS menus render
@@ -30,15 +45,78 @@ final class MenuBarController {
         versionItem.isEnabled = false
         menu.addItem(.separator())
 
+        addQuickActions(to: menu)
+
         let showItem = menu.addItem(withTitle: "Show m_tools", action: #selector(showWindowFromMenu), keyEquivalent: "")
         showItem.target = self
+
+        let settingsItem = menu.addItem(withTitle: "Quick Action Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+
         menu.addItem(.separator())
         // `target: nil` on Quit routes the action up the responder chain to NSApplication,
         // which implements `terminate(_:)` — the standard trick for status-bar-only apps.
         menu.addItem(withTitle: "Quit m_tools", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+    }
 
-        item.menu = menu
-        statusItem = item
+    private func addQuickActions(to menu: NSMenu) {
+        let actions = QuickActionSettings.enabledActions
+        guard !actions.isEmpty else {
+            // Every action turned off is a valid choice, but an unexplained gap in the menu
+            // isn't — say where they went.
+            let empty = menu.addItem(withTitle: "No quick actions enabled", action: nil, keyEquivalent: "")
+            empty.isEnabled = false
+            menu.addItem(.separator())
+            return
+        }
+
+        let header = menu.addItem(withTitle: "Quick Actions — run on clipboard", action: nil, keyEquivalent: "")
+        header.isEnabled = false
+
+        for (index, action) in actions.enumerated() {
+            let item = menu.addItem(withTitle: action.title, action: #selector(runQuickAction(_:)), keyEquivalent: "")
+            item.target = self
+            // The id, not the index — the menu is rebuilt on every open, and identifying by
+            // position would break the moment the list is reordered while the menu is up.
+            item.representedObject = action.id
+            // ⌘1…⌘9 for the first nine, matching how tab/window shortcuts work elsewhere.
+            if index < 9 {
+                item.keyEquivalent = String(index + 1)
+                item.keyEquivalentModifierMask = [.command]
+            }
+        }
+        menu.addItem(.separator())
+    }
+
+    // MARK: Actions
+
+    @objc private func runQuickAction(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String,
+              let action = QuickActionCatalog.action(withID: id) else { return }
+
+        let outcome = QuickActionRunner.run(action) { [weak self] in
+            self?.showWindow()
+        }
+        flashStatus(outcome.statusText)
+    }
+
+    @objc private func openSettings() {
+        AppState.shared.isSettingsPresented = true
+        showWindow()
+    }
+
+    /// Briefly replaces the menu bar icon with a word, then restores it. The window is
+    /// coming forward anyway, so this is a secondary cue — mainly useful for confirming the
+    /// result reached the clipboard when the copy setting is on.
+    private func flashStatus(_ text: String) {
+        guard let button = statusItem?.button else { return }
+        let previousImage = button.image
+        button.image = nil
+        button.title = text
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak button] in
+            button?.title = ""
+            button?.image = previousImage
+        }
     }
 
     @objc private func showWindowFromMenu() {
